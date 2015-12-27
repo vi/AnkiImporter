@@ -113,17 +113,15 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
             // This is called when the contextual action bar buttons are pressed
             switch (item.getItemId()) {
                 case R.id.share_data_button:
-                    /** Use AnkiDroid provider if installed, otherwise use ACTION_SEND intent
-                        If you don't need to share with any apps other than AnkiDroid, you can completely replace
-                        this code block with the code in AnkiDroidActionProvider.onMenuItemClick()
-                     **/
-                    if (AddContentApi.getAnkiDroidPackageName(AnkiImporter.this) != null) {
-                        // Use AnkiDroidActionProvider to handle the click event if the provider is installed
-                        item.setActionProvider(new AnkiDroidActionProvider(AnkiImporter.this, getSelectedData()));
-                    } else {
-                        // Only 1 piece of text is supported by the ACTION_SEND intent, so take first entry
-                        shareViaSendIntent(getSelectedData().get(0));
+                    String reqPerm = AddContentApi.checkRequiredPermission(AnkiImporter.this);
+                    if (reqPerm != null && ContextCompat.checkSelfPermission(AnkiImporter.this, reqPerm)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(AnkiImporter.this, new String[]{reqPerm}, AD_PERM_REQUEST);
+                        return true;
                     }
+                    // Add all data using AnkiDroid provider
+                    addCardsToAnkiDroid(getSelectedData());
+                   
                     return true;
                 default:
                     return false;
@@ -146,102 +144,6 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
             }
         }
         return selectedData;
-    }
-
-    /**
-     * Inner class which implements the dropdown menu on the Share button of the Contextual Action Bar
-     */
-    class AnkiDroidActionProvider extends ActionProvider implements
-            MenuItem.OnMenuItemClickListener {
-
-        static final int ANKIDROID_INSTANT_ADD = 0;
-        static final int ALL_APPS = 1;
-        ArrayList<HashMap<String, String>> mSelectedData;
-
-
-        /**
-         * Creates a new instance.
-         *
-         * @param context Context for accessing resources.
-         */
-        public AnkiDroidActionProvider(Activity context, ArrayList<HashMap<String, String>> selectedData) {
-            super(context);
-            mSelectedData = selectedData;
-        }
-
-        @Override
-        public View onCreateActionView() {
-            // Just return null for a simple dropdown menu
-            return null;
-        }
-
-        @Override
-        public boolean hasSubMenu() {
-            // If the AnkiDroid ContentProvider is installed then show it in a submenu, otherwise no need for submenu
-            return AddContentApi.getAnkiDroidPackageName(AnkiImporter.this) != null;
-        }
-
-        @Override
-        public void onPrepareSubMenu(SubMenu subMenu) {
-            // Generate the submenu when the system asks for it
-            subMenu.clear();
-            PackageManager manager = getApplicationContext().getPackageManager();
-            Resources res = getApplicationContext().getResources();
-            // Add AnkiDroid "instant add" to the menu
-            try {
-                ApplicationInfo appInfo = manager.getApplicationInfo(AddContentApi.getAnkiDroidPackageName(AnkiImporter.this),0);
-                String label = manager.getApplicationLabel(appInfo) + " " + res.getString(R.string.instant_add);
-                subMenu.add(0, ANKIDROID_INSTANT_ADD, ANKIDROID_INSTANT_ADD, label)
-                        .setIcon(appInfo.loadIcon(manager))
-                        .setOnMenuItemClickListener(this);
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.e(AnkiImporter.LOG_TAG, "AnkiDroid app could not be found");
-            }
-            // Add other apps here if it's advantageous for the user to be able to access them with one click
-            // You could also get rid of the "more" item and just add the apps that support SEND directly to submenu
-
-            // Add a "more" item to show more items if there are too many
-            subMenu.add(0, ALL_APPS, ALL_APPS, res.getString(R.string.more_items))
-                    .setIcon(R.mipmap.ic_launcher)
-                    .setOnMenuItemClickListener(this);
-        }
-
-        @Override
-        public boolean onMenuItemClick(MenuItem item) {
-            // Handle when the submenu items are clicked
-            if (item.getItemId() == ANKIDROID_INSTANT_ADD) {
-                // Request permission to access API if required (necessary for operation on Android 6+)
-                String reqPerm = AddContentApi.checkRequiredPermission(AnkiImporter.this);
-                if (reqPerm != null && ContextCompat.checkSelfPermission(AnkiImporter.this, reqPerm)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(AnkiImporter.this, new String[]{reqPerm}, AD_PERM_REQUEST);
-                    return true;
-                }
-                // Add all data using AnkiDroid provider
-                addCardsToAnkiDroid(mSelectedData);
-            } else if (item.getItemId() == ALL_APPS) {
-                // If the user presses "more" then switch to the stock Android intent selector (can only send 1 card)
-                shareViaSendIntent(mSelectedData.get(0));
-            }
-            return true;
-        }
-    }
-
-    /**
-     * Send a simple front / back flashcard via the ACTION_SEND intent
-     * @param data
-     */
-    private void shareViaSendIntent(HashMap<String, String> data) {
-        // Use ShareCompat so that the sending app info is correctly included in the share intent
-        Activity context = AnkiImporter.this;
-        Intent shareIntent = ShareCompat.IntentBuilder.from(context)
-                .setType("text/plain")
-                .setText(data.get(AnkiDroidConfig.BACK_SIDE_KEY))
-                .setSubject(data.get(AnkiDroidConfig.FRONT_SIDE_KEY))
-                .getIntent();
-        if (shareIntent.resolveActivity(context.getPackageManager()) != null) {
-            context.startActivity(shareIntent);
-        }
     }
 
     /**
