@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">API sample</string>
+    <string name="app_name">AnkiImporter</string>
     <string name="share">Share</string>
     <string name="instant_add">Instant-Add</string>
     <string name="more_items">Other apps</string>

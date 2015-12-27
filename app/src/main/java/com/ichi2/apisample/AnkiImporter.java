@@ -1,4 +1,4 @@
-package com.ichi2.apisample;
+package com.ichi2.plaintextimporter;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 
-public class MainActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class AnkiImporter extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     public static final String LOG_TAG = "AnkiDroidApiSample";
     private static final int AD_PERM_REQUEST = 0;
 
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         if (requestCode==AD_PERM_REQUEST && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             addCardsToAnkiDroid(getSelectedData());
         } else {
-            Toast.makeText(MainActivity.this, R.string.permission_denied, Toast.LENGTH_LONG).show();
+            Toast.makeText(AnkiImporter.this, R.string.permission_denied, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -117,9 +117,9 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                         If you don't need to share with any apps other than AnkiDroid, you can completely replace
                         this code block with the code in AnkiDroidActionProvider.onMenuItemClick()
                      **/
-                    if (AddContentApi.getAnkiDroidPackageName(MainActivity.this) != null) {
+                    if (AddContentApi.getAnkiDroidPackageName(AnkiImporter.this) != null) {
                         // Use AnkiDroidActionProvider to handle the click event if the provider is installed
-                        item.setActionProvider(new AnkiDroidActionProvider(MainActivity.this, getSelectedData()));
+                        item.setActionProvider(new AnkiDroidActionProvider(AnkiImporter.this, getSelectedData()));
                     } else {
                         // Only 1 piece of text is supported by the ACTION_SEND intent, so take first entry
                         shareViaSendIntent(getSelectedData().get(0));
@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         @Override
         public boolean hasSubMenu() {
             // If the AnkiDroid ContentProvider is installed then show it in a submenu, otherwise no need for submenu
-            return AddContentApi.getAnkiDroidPackageName(MainActivity.this) != null;
+            return AddContentApi.getAnkiDroidPackageName(AnkiImporter.this) != null;
         }
 
         @Override
@@ -189,13 +189,13 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             Resources res = getApplicationContext().getResources();
             // Add AnkiDroid "instant add" to the menu
             try {
-                ApplicationInfo appInfo = manager.getApplicationInfo(AddContentApi.getAnkiDroidPackageName(MainActivity.this),0);
+                ApplicationInfo appInfo = manager.getApplicationInfo(AddContentApi.getAnkiDroidPackageName(AnkiImporter.this),0);
                 String label = manager.getApplicationLabel(appInfo) + " " + res.getString(R.string.instant_add);
                 subMenu.add(0, ANKIDROID_INSTANT_ADD, ANKIDROID_INSTANT_ADD, label)
                         .setIcon(appInfo.loadIcon(manager))
                         .setOnMenuItemClickListener(this);
             } catch (PackageManager.NameNotFoundException e) {
-                Log.e(MainActivity.LOG_TAG, "AnkiDroid app could not be found");
+                Log.e(AnkiImporter.LOG_TAG, "AnkiDroid app could not be found");
             }
             // Add other apps here if it's advantageous for the user to be able to access them with one click
             // You could also get rid of the "more" item and just add the apps that support SEND directly to submenu
@@ -211,10 +211,10 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             // Handle when the submenu items are clicked
             if (item.getItemId() == ANKIDROID_INSTANT_ADD) {
                 // Request permission to access API if required (necessary for operation on Android 6+)
-                String reqPerm = AddContentApi.checkRequiredPermission(MainActivity.this);
-                if (reqPerm != null && ContextCompat.checkSelfPermission(MainActivity.this, reqPerm)
+                String reqPerm = AddContentApi.checkRequiredPermission(AnkiImporter.this);
+                if (reqPerm != null && ContextCompat.checkSelfPermission(AnkiImporter.this, reqPerm)
                         != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{reqPerm}, AD_PERM_REQUEST);
+                    ActivityCompat.requestPermissions(AnkiImporter.this, new String[]{reqPerm}, AD_PERM_REQUEST);
                     return true;
                 }
                 // Add all data using AnkiDroid provider
@@ -233,7 +233,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
      */
     private void shareViaSendIntent(HashMap<String, String> data) {
         // Use ShareCompat so that the sending app info is correctly included in the share intent
-        Activity context = MainActivity.this;
+        Activity context = AnkiImporter.this;
         Intent shareIntent = ShareCompat.IntentBuilder.from(context)
                 .setType("text/plain")
                 .setText(data.get(AnkiDroidConfig.BACK_SIDE_KEY))
@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
      */
     private void addCardsToAnkiDroid(final ArrayList<HashMap<String, String>> data) {
         // Get api instance
-        final AddContentApi api = new AddContentApi(MainActivity.this);
+        final AddContentApi api = new AddContentApi(AnkiImporter.this);
         // Look for our deck, add a new one if it doesn't exist
         Long did = api.findDeckIdByName(AnkiDroidConfig.DECK_NAME);
         if (did == null) {
@@ -266,7 +266,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         // Double-check that everything was added correctly
         String[] fieldNames = api.getFieldList(mid);
         if (mid == null || did == null || fieldNames == null) {
-            Toast.makeText(MainActivity.this, R.string.card_add_fail, Toast.LENGTH_LONG).show();
+            Toast.makeText(AnkiImporter.this, R.string.card_add_fail, Toast.LENGTH_LONG).show();
             return;
         }
         // Add cards
@@ -291,10 +291,10 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                 }
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Exception adding cards to AnkiDroid", e);
-                Toast.makeText(MainActivity.this, R.string.card_add_fail, Toast.LENGTH_LONG).show();
+                Toast.makeText(AnkiImporter.this, R.string.card_add_fail, Toast.LENGTH_LONG).show();
                 return;
             }
         }
-        Toast.makeText(MainActivity.this, getResources().getString(R.string.n_items_added, added), Toast.LENGTH_LONG).show();
+        Toast.makeText(AnkiImporter.this, getResources().getString(R.string.n_items_added, added), Toast.LENGTH_LONG).show();
     }
 }
