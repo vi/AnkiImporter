@@ -172,22 +172,50 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
         }
     }
 
+    String filterString(String in) {
+        return in.trim().replaceAll("\\&","&amp;").replaceAll("\\<", "&lt;");
+    }
+
+    DeckInformation readFile(File file) {
+        
+        String[] basenameExt = file.getName().split("\\.(?=[^\\.]+$)");
+        String basename = basenameExt[0];
+        String deckName = basename.replaceAll("\\.","::");
+        
+        ArrayList<HashMap<String, String>> data = new ArrayList<>();
+        
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] split = line.split(";");
+                if (split.length>1) {
+                    HashMap<String, String> hm = new HashMap<>();
+                    hm.put(AnkiDroidConfig.FIELDS[0], filterString(split[0]));
+                    hm.put(AnkiDroidConfig.FIELDS[1], filterString(split[1]));
+                    data.add(hm);
+                }
+            }
+        } catch (Exception e) { throw new RuntimeException(e); }
+        
+        DeckInformation info = new DeckInformation();  
+        info.name = deckName;
+        info.content = data;
+        return info;
+    }
+
     ArrayList<DeckInformation> gatherData() {
         ArrayList<DeckInformation> output = new ArrayList<>();
-        
-        DeckInformation info = new DeckInformation();
-        info.name = AnkiDroidConfig.DECK_NAME;
         
         // Extract the selected data
         SparseBooleanArray checked = mListView.getCheckedItemPositions();
         ArrayList<HashMap<String, String>> selectedData = new ArrayList<>();
         for (int i=0;i<checked.size();i++) {
             if (checked.valueAt(i)) {
-                selectedData.add(mListData.get(checked.keyAt(i)));
+                String fileName = mListData.get(checked.keyAt(i)).get(FIELDS[0]);
+                DeckInformation info = readFile( new File(importDirectory, fileName));
+                output.add(info);
             }
         }
-        info.content = selectedData;
-        output.add(info);
         return output;
     }
 
