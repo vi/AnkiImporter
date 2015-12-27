@@ -39,6 +39,11 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
     private ListView mListView;
     private ArrayList<HashMap<String, String>> mListData;
 
+    private class DeckInformation {
+        public String name;
+        ArrayList<HashMap<String, String>> content;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +64,7 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
     public void onRequestPermissionsResult (int requestCode, @NonNull String[] permissions,
                                             @NonNull int[] grantResults) {
         if (requestCode==AD_PERM_REQUEST && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            addCardsToAnkiDroid(getSelectedData());
+            addOrUpdateCardsToAnkiDroid(gatherData());
         } else {
             Toast.makeText(AnkiImporter.this, R.string.permission_denied, Toast.LENGTH_LONG).show();
         }
@@ -120,7 +125,7 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
                         return true;
                     }
                     // Add all data using AnkiDroid provider
-                    addCardsToAnkiDroid(getSelectedData());
+                    addOrUpdateCardsToAnkiDroid(gatherData());
                    
                     return true;
                 default:
@@ -134,7 +139,12 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
         }
     }
 
-    ArrayList<HashMap<String, String>> getSelectedData() {
+    ArrayList<DeckInformation> gatherData() {
+        ArrayList<DeckInformation> output = new ArrayList<>();
+        
+        DeckInformation info = new DeckInformation();
+        info.name = AnkiDroidConfig.DECK_NAME;
+        
         // Extract the selected data
         SparseBooleanArray checked = mListView.getCheckedItemPositions();
         ArrayList<HashMap<String, String>> selectedData = new ArrayList<>();
@@ -143,20 +153,27 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
                 selectedData.add(mListData.get(checked.keyAt(i)));
             }
         }
-        return selectedData;
+        info.content = selectedData;
+        output.add(info);
+        return output;
     }
 
     /**
      * Use the instant-add API to add flashcards directly to AnkiDroid
      * @param data List of cards to be added. Each card has a HashMap of field name / field value pairs.
      */
-    private void addCardsToAnkiDroid(final ArrayList<HashMap<String, String>> data) {
+    private void addOrUpdateCardsToAnkiDroid(final ArrayList<DeckInformation> input) {
+        
+      for (DeckInformation info: input) {
+        final String deckName = info.name;
+        final ArrayList<HashMap<String, String>> data = info.content;
+        
         // Get api instance
         final AddContentApi api = new AddContentApi(AnkiImporter.this);
         // Look for our deck, add a new one if it doesn't exist
-        Long did = api.findDeckIdByName(AnkiDroidConfig.DECK_NAME);
+        Long did = api.findDeckIdByName(deckName);
         if (did == null) {
-            did = api.addNewDeck(AnkiDroidConfig.DECK_NAME);
+            did = api.addNewDeck(deckName);
         }
         // Look for our model, add a new one if it doesn't exist
         Long mid = api.findModelIdByName(AnkiDroidConfig.MODEL_NAME, AnkiDroidConfig.FIELDS.length);
@@ -171,6 +188,7 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
         }
         // Add cards
         int added = 0;
+        int dupes = 0;
         for (HashMap<String, String> hm: data) {
             // Build a field map accounting for the fact that the user could have changed the fields in the model
             String[] flds = new String[fieldNames.length];
@@ -188,6 +206,8 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
                     if (noteUri != null) {
                         added++;
                     }
+                } else {
+                    dupes++;
                 }
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Exception adding cards to AnkiDroid", e);
@@ -195,6 +215,7 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
                 return;
             }
         }
-        Toast.makeText(AnkiImporter.this, getResources().getString(R.string.n_items_added, added), Toast.LENGTH_LONG).show();
+        Toast.makeText(AnkiImporter.this, getResources().getString(R.string.n_items_added, added, dupes), Toast.LENGTH_LONG).show();
+      }
     }
 }
