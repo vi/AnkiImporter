@@ -24,17 +24,22 @@ import android.widget.AbsListView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
+import android.app.AlertDialog;
 
 import com.ichi2.anki.api.AddContentApi;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.io.File;
 
 
 public class AnkiImporter extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
     public static final String LOG_TAG = "AnkiDroidApiSample";
     private static final int AD_PERM_REQUEST = 0;
+    
+    private static final String[] FIELDS = {"Filename"};
+    private File importDirectory;
 
     private ListView mListView;
     private ArrayList<HashMap<String, String>> mListData;
@@ -47,19 +52,47 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        importDirectory = new File(new File(android.os.Environment.getExternalStorageDirectory(), "AnkiDroid"),"TextImport");
+        
         setContentView(R.layout.activity_main);
         // Create the example data
-        mListData = AnkiDroidConfig.getExampleData();
+        mListData = getFilenames();
+        
+        if (mListData.size()==0) {
+            importDirectory.mkdirs();
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(getResources().getString(R.string.place_files, importDirectory.getAbsolutePath()));
+            builder.create().show();
+        }
+        
         // Setup the ListView containing the example data
         mListView = (ListView) findViewById(R.id.main_list);
         mListView.setAdapter(new SimpleAdapter(this, mListData, R.layout.word_layout,
-                Arrays.copyOfRange(AnkiDroidConfig.FIELDS, 0, 3),
-                new int[]{R.id.word_item, R.id.word_item_reading, R.id.word_item_translation}));
+                FIELDS,
+                new int[]{R.id.filename_item}));
         mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
         // When an item is long-pressed the ListSelectListener will make a Contextual Action Bar with Share icon
         mListView.setMultiChoiceModeListener(new ListSelectListener());
     }
 
+    private ArrayList<HashMap<String, String>> getFilenames() {
+        ArrayList<HashMap<String, String>> output = new ArrayList<>();
+        
+        if (importDirectory == null) return output;
+        
+        File[] files = importDirectory.listFiles();
+        
+        if (files == null) return output;
+        
+        for (File i : files) {
+            HashMap<String, String> hm = new HashMap<>();
+            hm.put(FIELDS[0], i.getName());
+            output.add(hm);
+        }
+        
+        return output;
+    }
 
     public void onRequestPermissionsResult (int requestCode, @NonNull String[] permissions,
                                             @NonNull int[] grantResults) {

@@ -8,4 +8,5 @@
     <string name="n_items_added">%1$d items added to AnkiDroid, %2$d duplicates not added</string>
     <string name="card_add_fail">Error adding cards to AnkiDroid</string>
     <string name="permission_denied">Couldn\'t get permission to access the AnkiDroid database</string>
+    <string name="place_files">Place your text files into directory:\n%s\n\nEach line should correspond to a note and contain two semicolon-separated fields.\n\nAfter that re-open this application, long-tap a filename and press "share" button.</string>
 </resources>

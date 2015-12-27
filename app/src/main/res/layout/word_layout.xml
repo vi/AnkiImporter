@@ -4,20 +4,8 @@
                 android:layout_height="wrap_content"
                 android:background="?android:attr/activatedBackgroundIndicator">
     <TextView
-        android:id="@+id/word_item"
+        android:id="@+id/filename_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="20sp"/>
-    <TextView
-        android:layout_below="@id/word_item"
-        android:id="@+id/word_item_reading"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="12sp"/>
-    <TextView
-        android:layout_below="@id/word_item_reading"
-        android:id="@+id/word_item_translation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="12sp"/>
 </RelativeLayout>
