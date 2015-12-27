@@ -259,9 +259,7 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
         // Look for our model, add a new one if it doesn't exist
         Long mid = api.findModelIdByName(AnkiDroidConfig.MODEL_NAME, AnkiDroidConfig.FIELDS.length);
         if (mid == null) {
-            mid = api.addNewCustomModel(AnkiDroidConfig.MODEL_NAME, AnkiDroidConfig.FIELDS,
-                    AnkiDroidConfig.CARD_NAMES, AnkiDroidConfig.QFMT, AnkiDroidConfig.AFMT,
-                    AnkiDroidConfig.CSS, did);
+            mid = api.addNewBasicModel(AnkiDroidConfig.MODEL_NAME);
         }
         // Double-check that everything was added correctly
         String[] fieldNames = api.getFieldList(mid);
