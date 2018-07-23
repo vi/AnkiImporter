@@ -29,6 +29,7 @@ import android.app.AlertDialog;
 import com.ichi2.anki.api.AddContentApi;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -266,6 +267,9 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
         int dupes = 0;
         
         Set<String> tags = new HashSet();
+        List<String[]> fieldsList = new ArrayList();
+        List<Set<String>> tagsList = new ArrayList();
+        
         tags.add(AnkiDroidConfig.TAGS);
         for (HashMap<String, String> hm: data) {
             // Build a field map accounting for the fact that the user could have changed the fields in the model
@@ -276,6 +280,9 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
                     flds[i] = hm.get(AnkiDroidConfig.FIELDS[i]);
                 }
             }
+            fieldsList.add(flds);
+            tagsList.add(tags);
+            /*
             // Add a new note using the current field map
             try {
                 // Only add item if there aren't any duplicates
@@ -292,8 +299,12 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
                 Toast.makeText(AnkiImporter.this, R.string.card_add_fail, Toast.LENGTH_LONG).show();
                 return;
             }
+            */
         }
-        Toast.makeText(AnkiImporter.this, getResources().getString(R.string.n_items_added, added, dupes), Toast.LENGTH_LONG).show();
+        
+        int ret = api.addNotes(mid, did, fieldsList, tagsList);
+        
+        Toast.makeText(AnkiImporter.this, getResources().getString(R.string.n_items_added, ret, 0), Toast.LENGTH_LONG).show();
       }
     }
 }
