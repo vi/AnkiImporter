@@ -31,6 +31,9 @@ import com.ichi2.anki.api.AddContentApi;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.io.File;
 
 
@@ -151,12 +154,6 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
             // This is called when the contextual action bar buttons are pressed
             switch (item.getItemId()) {
                 case R.id.share_data_button:
-                    String reqPerm = AddContentApi.checkRequiredPermission(AnkiImporter.this);
-                    if (reqPerm != null && ContextCompat.checkSelfPermission(AnkiImporter.this, reqPerm)
-                            != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(AnkiImporter.this, new String[]{reqPerm}, AD_PERM_REQUEST);
-                        return true;
-                    }
                     // Add all data using AnkiDroid provider
                     addOrUpdateCardsToAnkiDroid(gatherData());
                    
@@ -232,12 +229,29 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
         // Get api instance
         final AddContentApi api = new AddContentApi(AnkiImporter.this);
         // Look for our deck, add a new one if it doesn't exist
-        Long did = api.findDeckIdByName(deckName);
+        Map<Long,String> decks = api.getDeckList();
+        Long did = null;
+        for (Map.Entry<Long, String> entry : decks.entrySet()) {
+            if (entry.getValue().equals(deckName)) {
+                did = entry.getKey();
+                break;
+            }
+        }
         if (did == null) {
             did = api.addNewDeck(deckName);
         }
         // Look for our model, add a new one if it doesn't exist
-        Long mid = api.findModelIdByName(AnkiDroidConfig.MODEL_NAME, AnkiDroidConfig.FIELDS.length);
+        Long mid = null;
+        
+        Map<Long,String> models = api.getModelList();
+        
+        for (Map.Entry<Long, String> entry : decks.entrySet()) {
+            if (entry.getValue().equals(AnkiDroidConfig.MODEL_NAME)) {
+                mid = entry.getKey();
+                break;
+            }
+        }
+        
         if (mid == null) {
             mid = api.addNewBasicModel(AnkiDroidConfig.MODEL_NAME);
         }
@@ -250,6 +264,9 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
         // Add cards
         int added = 0;
         int dupes = 0;
+        
+        Set<String> tags = new HashSet();
+        tags.add(AnkiDroidConfig.TAGS);
         for (HashMap<String, String> hm: data) {
             // Build a field map accounting for the fact that the user could have changed the fields in the model
             String[] flds = new String[fieldNames.length];
@@ -262,14 +279,14 @@ public class AnkiImporter extends AppCompatActivity implements ActivityCompat.On
             // Add a new note using the current field map
             try {
                 // Only add item if there aren't any duplicates
-                if (!api.checkForDuplicates(mid, did, flds)) {
-                    Uri noteUri = api.addNewNote(mid, did, flds, AnkiDroidConfig.TAGS);
-                    if (noteUri != null) {
+                //if (!api.checkForDuplicates(mid, did, flds)) {
+                    Long noteId = api.addNote(mid, did, flds, tags);
+                    if (noteId != null) {
                         added++;
                     }
-                } else {
-                    dupes++;
-                }
+                //} else {
+                //    dupes++;
+                //}
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Exception adding cards to AnkiDroid", e);
                 Toast.makeText(AnkiImporter.this, R.string.card_add_fail, Toast.LENGTH_LONG).show();

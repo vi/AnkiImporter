@@ -10,7 +10,7 @@ public final class AnkiDroidConfig {
     // Name of model which will be created in AnkiDroid
     public static final String MODEL_NAME = "com.ichi2.plaintextimporter";
     // Optional space separated list of tags to add to every note
-    public static final String TAGS = "AnkiImporter";
+    public static final String TAGS = "AnkiImporter2";
     // List of field names that will be used in AnkiDroid model
     public static final String[] FIELDS = {"Front","Back"};
 
