@@ -2,12 +2,9 @@
 
 buildscript {
     repositories {
-        jcenter()
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
+        // The order below matters! (https://stackoverflow.com/questions/50786296/failed-to-resolve-common-open-file-gradle-build#comment89347693_50789855 )
         google()
+        jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.4'
@@ -19,10 +16,12 @@ buildscript {
 
 allprojects {
     repositories {
+        // The order below matters! (https://stackoverflow.com/questions/50786296/failed-to-resolve-common-open-file-gradle-build#comment89347693_50789855 )
+        google()
         jcenter()
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
     }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
