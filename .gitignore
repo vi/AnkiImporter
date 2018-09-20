@@ -40,6 +40,8 @@ Thumbs.db
 
 # Intellij IDEA (see https://intellij-support.jetbrains.com/entries/23393067)
 .idea/*
+*.ipr
+*.iws
 
 # Additionally ignore project files themselves so developers can choose their root directory name freely
 .idea/modules.xml
