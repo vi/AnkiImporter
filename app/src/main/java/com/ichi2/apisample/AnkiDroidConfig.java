@@ -1,4 +1,4 @@
-package com.ichi2.plaintextimporter;
+package com.ichi2.apisample;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,11 +8,11 @@ public final class AnkiDroidConfig {
     // Name of deck which will be created in AnkiDroid
     public static final String DECK_NAME = "ImporterSample";
     // Name of model which will be created in AnkiDroid
-    public static final String MODEL_NAME = "com.ichi2.plaintextimporter";
+    static final String MODEL_NAME = "com.ichi2.plaintextimporter";
     // Optional space separated list of tags to add to every note
-    public static final String TAGS = "AnkiImporter2";
+    static final String TAGS = "AnkiImporter2";
     // List of field names that will be used in AnkiDroid model
-    public static final String[] FIELDS = {"Front","Back"};
+    static final String[] FIELDS = {"Front","Back"};
 
     // Define two keys which will be used when using legacy ACTION_SEND intent
     public static final String FRONT_SIDE_KEY = FIELDS[0];
