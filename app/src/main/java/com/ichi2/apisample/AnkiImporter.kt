@@ -6,40 +6,34 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.AbsListView
-import android.widget.ListView
 import android.widget.SimpleAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.ichi2.anki.api.AddContentApi
 import com.ichi2.plaintextimporter.R
+import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.util.*
 
 class AnkiImporter : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
+
     private var importDirectory: File? = null
-
-    private var mListView: ListView? = null
     private var mListData: ArrayList<HashMap<String, String>>? = null
-
     private val filenames: ArrayList<HashMap<String, String>>
-        get() {
-            val output = ArrayList<HashMap<String, String>>()
-
-            if (importDirectory == null) return output
-
-            val files = importDirectory!!.listFiles() ?: return output
-
-            for (i in files) {
-                val hm = HashMap<String, String>()
-                hm[FIELDS[0]] = i.name
-                output.add(hm)
+        get() = ArrayList<HashMap<String, String>>().apply {
+            if (importDirectory != null) {
+                importDirectory!!.listFiles()?.forEach {
+                    HashMap<String, String>().let { map ->
+                        map[FIELDS[0]] = it.name
+                        add(map)
+                    }
+                }
             }
-
-            return output
         }
 
     private inner class DeckInformation {
+
         var name: String? = null
         internal var content: ArrayList<HashMap<String, String>>? = null
     }
@@ -61,23 +55,23 @@ class AnkiImporter : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
         }
 
         // Setup the ListView containing the example data
-        mListView = findViewById(R.id.main_list)
-        mListView!!.adapter = SimpleAdapter(this, mListData, R.layout.word_layout,
-                FIELDS,
-                intArrayOf(R.id.filename_item))
-        mListView!!.choiceMode = ListView.CHOICE_MODE_MULTIPLE_MODAL
+        mainList.adapter = SimpleAdapter(
+            this,
+            mListData,
+            R.layout.word_layout,
+            FIELDS,
+            intArrayOf(R.id.filename_item)
+        )
         // When an item is long-pressed the ListSelectListener will make a Contextual Action Bar with Share icon
-        mListView!!.setMultiChoiceModeListener(ListSelectListener())
+        mainList.setMultiChoiceModeListener(ListSelectListener())
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
-                                            grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) =
         if (requestCode == AD_PERM_REQUEST && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             addOrUpdateCardsToAnkiDroid(gatherData())
         } else {
-            Toast.makeText(this@AnkiImporter, R.string.permission_denied, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.permission_denied, Toast.LENGTH_LONG).show()
         }
-    }
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -91,9 +85,14 @@ class AnkiImporter : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
      */
     internal inner class ListSelectListener : AbsListView.MultiChoiceModeListener {
 
-        override fun onItemCheckedStateChanged(mode: android.view.ActionMode, position: Int, id: Long, checked: Boolean) {
+        override fun onItemCheckedStateChanged(
+            mode: android.view.ActionMode,
+            position: Int,
+            id: Long,
+            checked: Boolean
+        ) {
             // Set the subtitle on the action bar to show how many items are selected
-            val numItemsChecked = mListView!!.checkedItemCount
+            val numItemsChecked = mainList.checkedItemCount
             val subtitle = resources.getString(R.string.n_items_selected, numItemsChecked)
             mode.subtitle = subtitle
         }
@@ -128,9 +127,8 @@ class AnkiImporter : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
         }
     }
 
-    private fun filterString(`in`: String): String {
-        return `in`.trim { it <= ' ' }.replace("&".toRegex(), "&amp;").replace("<".toRegex(), "&lt;")
-    }
+    private fun filterString(`in`: String) =
+        `in`.trim { it <= ' ' }.replace("&".toRegex(), "&amp;").replace("<".toRegex(), "&lt;")
 
     private fun readFile(file: File): DeckInformation {
 
@@ -160,19 +158,16 @@ class AnkiImporter : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
         return info
     }
 
-    private fun gatherData(): ArrayList<DeckInformation> {
-        val output = ArrayList<DeckInformation>()
-
+    private fun gatherData(): ArrayList<DeckInformation> = ArrayList<DeckInformation>().apply {
         // Extract the selected data
-        val checked = mListView!!.checkedItemPositions
+        val checked = mainList.checkedItemPositions
         for (i in 0 until checked.size()) {
             if (checked.valueAt(i)) {
                 val fileName = mListData!![checked.keyAt(i)][FIELDS[0]]
                 val info = readFile(File(importDirectory, fileName))
-                output.add(info)
+                add(info)
             }
         }
-        return output
     }
 
     /**
@@ -242,30 +237,30 @@ class AnkiImporter : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                 try {
                     // Only add item if there aren't any duplicates
                     //if (!api.checkForDuplicates(mid, did, flds)) {
-                    Long noteId = api.addNote(mid, did, flds, tags);
+                    val noteId = api.addNote(mid, did, flds, tags)
                     if (noteId != null) {
                     }
                     //} else {
                     //    dupes++;
                     //}
-                } catch (Exception e) {
-                    Log.e(LOG_TAG, "Exception adding cards to AnkiDroid", e);
-                    Toast.makeText(AnkiImporter.this, R.string.card_add_fail, Toast.LENGTH_LONG).show();
-                    return;
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "Exception adding cards to AnkiDroid", e)
+                    Toast.makeText(this, R.string.card_add_fail, Toast.LENGTH_LONG).show()
+                    return
                 }
-            */
+                */
             }
 
             val ret = api.addNotes(mid, did, fieldsList, tagsList)
 
-            Toast.makeText(this@AnkiImporter, resources.getString(R.string.n_items_added, ret, 0), Toast.LENGTH_LONG).show()
+            Toast.makeText(this@AnkiImporter, resources.getString(R.string.n_items_added, ret, 0), Toast.LENGTH_LONG)
+                .show()
         }
     }
 
     companion object {
-        //    public static final String LOG_TAG = "AnkiDroidApiSample";
+        //        const val LOG_TAG = "AnkiDroidApiSample"
         private const val AD_PERM_REQUEST = 0
-
         private val FIELDS = arrayOf("Filename")
     }
 }

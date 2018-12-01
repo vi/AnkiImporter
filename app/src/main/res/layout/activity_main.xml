@@ -9,8 +9,9 @@
     tools:context="com.ichi2.apisample.AnkiImporter">
 
     <ListView
-        android:id="@+id/main_list"
+        android:id="@+id/mainList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:choiceMode="multipleChoiceModal"
         android:scrollbars="vertical" />
 </RelativeLayout>
