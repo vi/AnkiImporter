@@ -6,12 +6,20 @@ Based on [API sample](https://github.com/ankidroid/Anki-Android/wiki/AnkiDroid-A
 
 License is the same as license of the sample linked above.
 
-Note: the app still works in Android 12, but is tricky to run properly:
+# Running 
+
+The app still works in Android 12, but is tricky to run properly:
 
 1. You need to create /sdcard/AnkiDroid/TextImport directory manually
 2. You need to know file format and filename-to-deck coding principle
 3. You need to grant filesystem and AnkiDroid access permissions manually (using "App info"). The app does not request permissions, just fails to work if they are not granted.
 4. You need to force-restart the app after granting permissions to re-read file list.
+
+# Building
+
+I can build it on Debian using command line similar to this one:
+
+    JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 ANDROID_HOME=/path/to/androidsdk ./gradlew assembleDebug
 
 ## TODO/FIXME
 
