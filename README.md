@@ -1,3 +1,11 @@
+# Project abandoned
+
+Function similar to this project is now available in AnkiDroid proper (though you need to create a deck manually).
+
+Note that each import (using this tool) created a separate note type; you can use [this instruction](https://forums.ankiweb.net/t/how-do-i-merge-those-excessive-api-created-note-types-into-one/52210/6) to deduplicate them using database editing.
+
+----
+
 # AnkiImport
 
 PlainText semicolon-separated file -> AnkiDroid importer
